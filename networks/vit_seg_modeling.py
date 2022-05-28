@@ -7,7 +7,7 @@ import copy
 import logging
 import math
 
-from os.path import join as pjoin
+# from os.path import join as pjoin
 
 import torch
 import torch.nn as nn
@@ -43,6 +43,15 @@ def np2th(weights, conv=False):
 def swish(x):
     return x * torch.sigmoid(x)
 
+from os.path import join
+from os.path import normpath
+import platform
+def pjoin(path, *paths):
+    p = join(path, *paths)
+    if platform.system() == "Windows":
+        return normpath(p).replace('\\','/')
+    else:
+        return p
 
 ACT2FN = {"gelu": torch.nn.functional.gelu, "relu": torch.nn.functional.relu, "swish": swish}
 

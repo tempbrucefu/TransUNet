@@ -6,7 +6,8 @@ import torch
 from scipy import ndimage
 from scipy.ndimage.interpolation import zoom
 from torch.utils.data import Dataset
-
+import os
+import random
 
 def random_rot_flip(image, label):
     k = np.random.randint(0, 4)
@@ -50,18 +51,25 @@ class Synapse_dataset(Dataset):
     def __init__(self, base_dir, list_dir, split, transform=None):
         self.transform = transform  # using transform in torch!
         self.split = split
-        self.sample_list = open(os.path.join(list_dir, self.split+'.txt')).readlines()
+        #self.sample_list = open(os.path.join(list_dir, self.split+'.txt')).readlines()
         self.data_dir = base_dir
+        self.sample_list = [f for f in os.listdir(self.data_dir) if f.endswith('.npz')]
 
     def __len__(self):
         return len(self.sample_list)
 
     def __getitem__(self, idx):
         if self.split == "train":
-            slice_name = self.sample_list[idx].strip('\n')
-            data_path = os.path.join(self.data_dir, slice_name+'.npz')
-            data = np.load(data_path)
-            image, label = data['image'], data['label']
+            # slice_name = self.sample_list[idx].strip('\n')
+            # data_path = os.path.join(self.data_dir, slice_name+'.npz')
+            data = np.load(os.path.join(self.data_dir,self.sample_list[idx]))
+            data = data.f.arr_0
+            img_ind = random.randint(0,data.shape[2]-1)
+            image = data[:,:,img_ind]
+            data_label = np.load(os.path.join(os.path.dirname(self.data_dir),"labels_npz",self.sample_list[idx][:-4]+"_seg.npz"))
+            data_label = data_label.f.arr_0
+            #image, label = data['image'], data['label']
+            label = data_label[:,:,img_ind]
         else:
             vol_name = self.sample_list[idx].strip('\n')
             filepath = self.data_dir + "/{}.npy.h5".format(vol_name)
